@@ -1,0 +1,168 @@
+﻿@page "/empleados"
+@using BlazorEmpleados.Client.Service.Interface
+@using BlazorEmpleados.DTOs.Empleado
+@using Blazored.LocalStorage
+@using System.Net.Http.Headers
+@inject IEmpleadoService empleadoService
+@inject NavigationManager navigation
+@inject ILocalStorageService localStorage
+@inject HttpClient httpClient
+
+<h3>Empleados</h3>
+
+<a class="btn btn-success btn-sm mb-3" href="empleado">Nuevo Empleado</a>
+
+<div class="mb-3">
+    <label class="form-label">Buscar empleado por nombre o número de documento</label>
+    <div class="input-group">
+        <input type="text" @bind-value="query" class="form-control" placeholder="Ingrese nombre o número de documento del empleado" />
+        <button type="button" @onclick="Buscar" class="btn btn-primary">Buscar</button>
+    </div>
+</div>
+
+@if (message != null)
+{
+    <p class="alert alert-info">@message</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Nombre Completo</th>
+                    <th>Departamento</th>
+                    <th>Sueldo</th>
+                    <th>Numero Documento</th>
+                    <th>Fecha Contratacion</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (listaEmpleado == null)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <img style="width:50px" src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif" />
+                        </td>
+                    </tr>
+                }
+                else if (listaEmpleado.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center">No se encontraron empleados con ese nombre o número de documento</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var empleado in listaEmpleado)
+                    {
+                        <tr>
+                            <td>@empleado.NombreCompleto</td>
+                            <td>@empleado.IdDepartamentoNavigation!.Nombre</td>
+                            <td>@empleado.Sueldo</td>
+                            <td>@empleado.NroDocumento</td>
+                            <td>@empleado.FechaContrato.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" @onclick="(() => Eliminar(empleado.NroDocumento))">Eliminar</button>
+                                <a class="btn btn-primary btn-sm" href="empleado/@empleado.NroDocumento">
+                                    <i class="oi oi-pencil">Editar</i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    List<EmpleadoResponseDTO>? listaEmpleado = null;
+    private string? query;
+    private string? message = null;
+    private bool isAuthenticated = false;
+
+    private async Task Buscar()
+    {
+        try
+        {
+            var token = await localStorage.GetItemAsync<string>("authToken");
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                listaEmpleado = await empleadoService.GetAll();
+                message = null;
+            }
+            else
+            {
+                var empleadoPorDocumento = await empleadoService.GetByNroDocumento(query);
+                if (empleadoPorDocumento != null)
+                {
+                    listaEmpleado = new List<EmpleadoResponseDTO> { empleadoPorDocumento };
+                    message = null;
+                }
+                else
+                {
+                    listaEmpleado = await empleadoService.GetByNombre(query);
+                    if (listaEmpleado.Count == 0)
+                    {
+                        message = "No hay empleados con ese nombre o número de documento";
+                    }
+                    else
+                    {
+                        message = null;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error al buscar empleado: {ex.Message}";
+        }
+    }
+
+    private async Task Eliminar(string nroDocumento)
+    {
+        try
+        {
+            var token = await localStorage.GetItemAsync<string>("authToken");
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var eliminado = await empleadoService.Delete(nroDocumento);
+            if (eliminado)
+            {
+                listaEmpleado = await empleadoService.GetAll();
+            }
+            else
+            {
+                message = "No se pudo eliminar el empleado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error al eliminar empleado: {ex.Message}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isAuthenticated = await localStorage.ContainKeyAsync("authToken");
+        if (isAuthenticated)
+        {
+            try
+            {
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                listaEmpleado = await empleadoService.GetAll();
+            }
+            catch (Exception ex)
+            {
+                message = $"Error al cargar empleados: Debes Iniciar Sesion!";
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+    }
+}

@@ -1,0 +1,41 @@
+﻿@page "/login"
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+@using BlazorEmpleados.Client.Service.Interface
+@using BlazorEmpleados.DTOs.User
+
+<h3>Iniciar Sesión</h3>
+
+<EditForm Model="loginRequest" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="username">Usuario:</label>
+        <InputText id="username" @bind-Value="loginRequest.UserName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="password">Contraseña:</label>
+        <InputText id="password" type="password" @bind-Value="loginRequest.UserPassword" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+</EditForm>
+
+@code {
+    private LoginRequestDTO loginRequest = new LoginRequestDTO();
+
+    private async Task HandleLogin()
+    {
+        var token = await UserService.Login(loginRequest);
+        if (!string.IsNullOrEmpty(token))
+        {
+            // Almacenar el token en localStorage u otro método de persistencia
+            Console.WriteLine("Login exitoso, token: " + token);
+            NavigationManager.NavigateTo("/empleados"); // Redirigir a la página de empleados después del login
+        }
+        else
+        {
+            Console.WriteLine("Login fallido");
+        }
+    }
+}

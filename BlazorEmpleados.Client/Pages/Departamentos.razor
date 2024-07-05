@@ -1,0 +1,102 @@
+﻿@page "/departamentos"
+
+@using BlazorEmpleados.Client.Service
+@using BlazorEmpleados.Client.Service.Interface
+@using BlazorEmpleados.DTOs
+@using BlazorEmpleados.DTOs.Departamento
+@using Blazored.LocalStorage
+@using System.Net.Http.Headers
+@inject IDepartamentoService departamentoService
+@inject ILocalStorageService localStorage
+@inject HttpClient httpClient
+
+<h3>Departamentos</h3>
+
+@if (message != null)
+{
+    <p class="alert alert-info">@message</p>
+}
+else
+{
+    <a class="btn btn-success btn-sm mb-3" href="departamento">Nuevo Departamento</a>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Id Departamento</th>
+                    <th>Nombre Departamento</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (listaDepartamento == null)
+                {
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            <img style="width:50px" src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif" />
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var departamento in listaDepartamento)
+                    {
+                        <tr>
+                            <td>@departamento.IdDepartamento</td>
+                            <td>@departamento.Nombre</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" @onclick="(() => Eliminar(departamento.IdDepartamento))">Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<DepartamentoResponseDTO>? listaDepartamento = null;
+    private bool isAuthenticated = false;
+    private string? message = null;
+
+    private async Task Eliminar(int id)
+    {
+        try
+        {
+            var token = await localStorage.GetItemAsync<string>("authToken");
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var eliminado = await departamentoService.Delete(id);
+            if (eliminado)
+            {
+                listaDepartamento = await departamentoService.GetAll();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar el departamento: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isAuthenticated = await localStorage.ContainKeyAsync("authToken");
+        if (isAuthenticated)
+        {
+            try
+            {
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                listaDepartamento = await departamentoService.GetAll();
+            }
+            catch (Exception ex)
+            {
+                message = $"Error al cargar empleados: Debes Iniciar Sesion!";
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+    }
+}

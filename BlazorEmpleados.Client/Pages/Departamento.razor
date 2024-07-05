@@ -1,0 +1,45 @@
+﻿@page "/departamento"
+
+@using System.ComponentModel.DataAnnotations
+@using BlazorEmpleados.Client.Service
+@using BlazorEmpleados.Client.Service.Interface
+@using BlazorEmpleados.DTOs
+@using BlazorEmpleados.DTOs.Departamento
+
+@inject IDepartamentoService departamentoService
+@inject NavigationManager navegacion
+
+<h3>Nuevo Departamento</h3>
+
+
+<EditForm Model="departamento" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Nombre Departamento</label>
+        <InputText class="form-control" @bind-Value="departamento.Nombre"></InputText>
+        <ValidationMessage For="@(() => departamento.Nombre)"></ValidationMessage>
+    </div>
+
+
+    <button class="btn btn-primary" type="submit">
+        Guardar Departamento
+    </button>
+
+    <a class="btn btn-warning" href="/departamentos">Volver</a>
+</EditForm>
+
+@code {
+
+    DepartamentoCreateDTO departamento = new DepartamentoCreateDTO();
+
+    private async Task OnValidSubmit()
+    {
+        bool result;
+        result = await departamentoService.Create(departamento);
+        if (result)
+        {
+            navegacion.NavigateTo("/departamentos");
+        }
+    }
+}

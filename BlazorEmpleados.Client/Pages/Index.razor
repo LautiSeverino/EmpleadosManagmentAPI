@@ -1,0 +1,22 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+
+<h3>Bienvenido a Blazor Empleados</h3>
+
+<div>
+    <p>¿Qué desea hacer?</p>
+    <button @onclick="NavigateToLogin" class="btn btn-primary m-2">Iniciar Sesión</button>
+    <button @onclick="NavigateToRegister" class="btn btn-secondary m-2">Registrarse</button>
+</div>
+
+@code {
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private void NavigateToRegister()
+    {
+        NavigationManager.NavigateTo("/register");
+    }
+}

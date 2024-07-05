@@ -1,0 +1,64 @@
+﻿@page "/register"
+@inject IUserService UserService
+@inject NavigationManager NavigationManager
+@using BlazorEmpleados.Client.Service.Interface
+@using BlazorEmpleados.DTOs.User
+@using System.ComponentModel.DataAnnotations
+
+<h3>Registrarse</h3>
+
+<EditForm Model="registerRequest" OnValidSubmit="HandleRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="username">Usuario:</label>
+        <InputText id="username" @bind-Value="registerRequest.UserName" class="form-control" />
+        <ValidationMessage For="@(() => registerRequest.UserName)" />
+    </div>
+    <div class="form-group">
+        <label for="userEmail">Correo electrónico:</label>
+        <InputText id="userEmail" @bind-Value="registerRequest.UserEmail" class="form-control" />
+        <ValidationMessage For="@(() => registerRequest.UserEmail)" />
+    </div>
+    <div class="form-group">
+        <label for="userPhone">Teléfono:</label>
+        <InputText id="userPhone" @bind-Value="registerRequest.UserPhone" class="form-control" />
+        <ValidationMessage For="@(() => registerRequest.UserPhone)" />
+    </div>
+    <div class="form-group">
+        <label for="password">Contraseña:</label>
+        <InputText id="password" type="password" @bind-Value="registerRequest.UserPassword" class="form-control" />
+        <ValidationMessage For="@(() => registerRequest.UserPassword)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Registrarse</button>
+</EditForm>
+
+@code {
+    private UserCreateRequestDTO registerRequest = new UserCreateRequestDTO();
+
+    private async Task HandleRegister()
+    {
+        var validationContext = new ValidationContext(registerRequest, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+
+        // Validar manualmente el modelo antes de intentar registrar
+        if (!Validator.TryValidateObject(registerRequest, validationContext, validationResults, validateAllProperties: true))
+        {
+            // Mostrar mensajes de validación si hay errores
+            Console.WriteLine("El formulario contiene errores de validación.");
+            return;
+        }
+
+        var result = await UserService.Register(registerRequest);
+        if (result != null)
+        {
+            Console.WriteLine("Registro exitoso");
+            NavigationManager.NavigateTo("/login"); // Redirigir a la página de inicio de sesión después del registro
+        }
+        else
+        {
+            Console.WriteLine("Error en el registro");
+        }
+    }
+}

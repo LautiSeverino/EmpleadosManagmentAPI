@@ -1,0 +1,126 @@
+﻿@page "/empleado"
+@page "/empleado/{NroDocumento}"
+
+@using System.ComponentModel.DataAnnotations
+@using BlazorEmpleados.Client.Service
+@using BlazorEmpleados.Client.Service.Interface
+@using BlazorEmpleados.DTOs
+@using BlazorEmpleados.DTOs.Departamento
+@using BlazorEmpleados.DTOs.Empleado
+
+@inject IEmpleadoService empleadoService
+@inject IDepartamentoService departamentoService
+@inject NavigationManager navegacion
+
+<h3>@titulo</h3>
+
+<EditForm Model="empleado" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Nombre Completo</label>
+        <InputText class="form-control" @bind-Value="empleado.NombreCompleto"></InputText>
+        <ValidationMessage For="@(() => empleado.NombreCompleto)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Departamento</label>
+        <InputSelect class="form-select" @bind-Value="empleado.IdDepartamento">
+            <option value="0">-- Seleccionar --</option>
+            @foreach (var item in listaDepartamento)
+            {
+                <option value="@item.IdDepartamento">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => empleado.IdDepartamento)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Sueldo</label>
+        <InputNumber class="form-control" @bind-Value="empleado.Sueldo"></InputNumber>
+        <ValidationMessage For="@(() => empleado.Sueldo)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha Contrato</label>
+        <InputDate class="form-control" @bind-Value="empleado.FechaContrato"></InputDate>
+        <ValidationMessage For="@(() => empleado.FechaContrato)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Número de Documento</label>
+        <InputText class="form-control" @bind-Value="empleado.NroDocumento" disabled="@(NroDocumento != null)"></InputText>
+        <ValidationMessage For="@(() => empleado.NroDocumento)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="/empleados">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string? NroDocumento { get; set; }
+
+    string titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    EmpleadoCreateRequestDTO empleado = new EmpleadoCreateRequestDTO();
+    List<DepartamentoResponseDTO> listaDepartamento = new List<DepartamentoResponseDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaDepartamento = await departamentoService.GetAll();
+
+        if (!string.IsNullOrEmpty(NroDocumento))
+        {
+            var empleadoExistente = await empleadoService.GetByNroDocumento(NroDocumento);
+            if (empleadoExistente != null)
+            {
+                empleado = new EmpleadoCreateRequestDTO
+                    {
+                        NombreCompleto = empleadoExistente.NombreCompleto,
+                        IdDepartamento = empleadoExistente.IdDepartamento,
+                        Sueldo = empleadoExistente.Sueldo,
+                        NroDocumento = empleadoExistente.NroDocumento,
+                        FechaContrato = empleadoExistente.FechaContrato
+                    };
+                btnTexto = "Actualizar Empleado";
+                titulo = "Editar Empleado";
+            }
+        }
+        else
+        {
+            empleado.FechaContrato = DateTime.Today;
+            btnTexto = "Guardar Empleado";
+            titulo = "Nuevo Empleado";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        bool result;
+        if (string.IsNullOrEmpty(NroDocumento))
+        {
+            result = await empleadoService.Create(empleado);
+        }
+        else
+        {
+            var empleadoUpdate = new EmpleadoUpdateRequestDTO
+                {
+                    NombreCompleto = empleado.NombreCompleto,
+                    IdDepartamento = empleado.IdDepartamento,
+                    Sueldo = empleado.Sueldo,
+                    FechaContrato = empleado.FechaContrato
+                };
+            result = await empleadoService.Update(empleadoUpdate, empleado.NroDocumento);
+        }
+
+        if (result)
+        {
+            navegacion.NavigateTo("/empleados");
+        }
+    }
+}
