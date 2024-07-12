@@ -33,6 +33,11 @@ namespace BlazorEmpleados.BLL
             var empleado = _mapper.Map<Empleado>(empleadoCreate);
             empleado.IdDepartamento = depto.IdDepartamento;
 
+            var exists = await _unitOfWork.EmpleadoRepository.GetByNroDocumento(empleado.NroDocumento);
+
+            if (exists != null)
+                return null;
+
             await _unitOfWork.EmpleadoRepository.Create(empleado);
             int flag = await _unitOfWork.Save();
             if (flag == 0)

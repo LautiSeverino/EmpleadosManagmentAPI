@@ -15,21 +15,44 @@ namespace BlazorEmpleados.API.Controllers
     public class DepartamentoController : ControllerBase
     {
         private readonly IDepartamentoService _departamentoService;
-        public DepartamentoController(IDepartamentoService departamentoService)
+        private readonly ILogger<DepartamentoController> _logger;
+        public DepartamentoController(IDepartamentoService departamentoService, ILogger<DepartamentoController> logger)
         {
             _departamentoService = departamentoService;
+            _logger = logger;
+
         }
         [HttpGet("GetAll")]
         public async Task<ActionResult<List<DepartamentoResponseDTO>>> GetAll()
         {
-            var result = await _departamentoService.GetAll();
-            return Ok(result);
+            try
+            {
+                _logger.LogInformation("Se invoca al Endpoint GetAll");
+                var result = await _departamentoService.GetAll();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex.Message, "Error al obtener datos en GetAll");
+                return BadRequest(ex.Message);
+            }
         }
         [HttpPost("Create")]
         public async Task<ActionResult<DepartamentoResponseDTO>> Create(DepartamentoCreateDTO departamento)
         {
-            var result = await _departamentoService.Create(departamento);
-            return Ok(result);
+            try
+            {
+                _logger.LogInformation("Se invoca al Endpoint Create");
+                var result = await _departamentoService.Create(departamento);
+                if (result == null)
+                    return BadRequest();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex.Message, "Error al crear deapartamento");
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

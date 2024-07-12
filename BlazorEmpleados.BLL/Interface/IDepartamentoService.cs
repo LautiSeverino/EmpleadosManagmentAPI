@@ -11,6 +11,5 @@ namespace BlazorEmpleados.BLL.Interface
     {
         Task<List<DepartamentoResponseDTO>> GetAll();
         Task<DepartamentoResponseDTO> Create(DepartamentoCreateDTO departamento);
-        Task<bool> Delete(int id);
     }
 }

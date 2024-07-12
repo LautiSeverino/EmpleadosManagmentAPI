@@ -19,20 +19,26 @@ namespace BlazorEmpleados.API.Controllers
     {
         public IConfiguration _configuration { get; set; }
         private readonly IUserService _userService;
-        public LoginController(IConfiguration configuration, IUserService userService)
+        private readonly ILogger<LoginController> _logger;
+        public LoginController(IConfiguration configuration, IUserService userService, ILogger<LoginController> logger)
         {
             _configuration = configuration;
             _userService = userService;
+            _logger = logger;
         }
+
         [HttpPost("Login")]
         [AllowAnonymous]
         public async Task<ActionResult<object>> Login(LoginRequestDTO login)
         {
-            var userEntity = await _userService.GetUser(login.UserName, login.UserPassword);
-            if (userEntity != null)
+            try
             {
-                var claims = new[]
+                _logger.LogInformation("Se invoca al Endpoint Login");
+                var userEntity = await _userService.GetUser(login.UserName, login.UserPassword);
+                if (userEntity != null)
                 {
+                    var claims = new[]
+                    {
                     new Claim(JwtRegisteredClaimNames.Sub,_configuration["Jwt:Subject"]),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
@@ -41,21 +47,27 @@ namespace BlazorEmpleados.API.Controllers
 
 
                 };
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-                var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                var token = new JwtSecurityToken(
-                    _configuration["Jwt:Issuer"],
-                    _configuration["Jwt:Audience"],
-                    claims,
-                    expires: DateTime.UtcNow.AddHours(5),
-                    signingCredentials: signIn);
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+                    var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var token = new JwtSecurityToken(
+                        _configuration["Jwt:Issuer"],
+                        _configuration["Jwt:Audience"],
+                        claims,
+                        expires: DateTime.UtcNow.AddHours(5),
+                        signingCredentials: signIn);
 
-                return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+                }
+                else
+                    return BadRequest();
+                
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest("");
+                _logger.LogCritical(ex.Message, "Error al Iniciar Sesion");
+                return BadRequest(ex.Message);
             }
+           
         }
 
         [HttpPost("Register")]
@@ -64,6 +76,7 @@ namespace BlazorEmpleados.API.Controllers
         {
             try
             {
+                _logger.LogInformation("Se invoca al Endpoint Register");
                 var existeUser = await _userService.GetUser(user.UserName, user.UserPassword);
 
                 if (existeUser != null)
@@ -76,8 +89,8 @@ namespace BlazorEmpleados.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogCritical(ex.Message, "Error al Registrarse");
                 return BadRequest(ex.Message);
-                throw new Exception(ex.Message);
             }
         }
     }

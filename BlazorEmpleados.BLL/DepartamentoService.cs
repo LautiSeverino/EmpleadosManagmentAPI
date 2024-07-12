@@ -29,18 +29,6 @@ namespace BlazorEmpleados.BLL
             var result = _mapper.Map<DepartamentoResponseDTO>(departamentoEntity);
             return result;
         }
-
-        public async Task<bool> Delete(int id)
-        {
-            var depto = await _unitOfWork.DepartamentoRepository.GetById(id);
-            if (depto == null) return false;
-
-            _unitOfWork.DepartamentoRepository.Delete(depto);
-            if (await _unitOfWork.Save() == 0)
-                return false;
-            return true;
-        }
-
         public async Task<List<DepartamentoResponseDTO>> GetAll()
         {
             var departamentos = await _unitOfWork.DepartamentoRepository.GetAll();

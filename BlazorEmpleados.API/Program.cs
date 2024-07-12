@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Reflection;
 using System.Text;
 
@@ -18,6 +19,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+//--------------Serilog------------------------ 
+var configuration = new
+ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+Log.Logger = new
+LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
+builder.Host.UseSerilog();
 
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
