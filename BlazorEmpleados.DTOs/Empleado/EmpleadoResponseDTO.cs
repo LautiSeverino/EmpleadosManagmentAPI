@@ -16,7 +16,7 @@ namespace BlazorEmpleados.DTOs.Empleado
 
         public int Sueldo { get; set; }
         public string NroDocumento { get; set; } = null!;
-        public DateTime FechaContrato { get; set; }
+        public string FechaContrato { get; set; }
 
         public DepartamentoResponseDTO? IdDepartamentoNavigation { get; set; }
     }

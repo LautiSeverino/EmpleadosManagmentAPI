@@ -20,12 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-//--------------Serilog------------------------ 
-var configuration = new
-ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-Log.Logger = new
-LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
-builder.Host.UseSerilog();
+
 
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -76,6 +71,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+
 // Register services
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
@@ -107,10 +104,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
+//--------------Serilog------------------------ 
+var configuration = new
+ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+Log.Logger = new
+LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
+builder.Host.UseSerilog();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsProduction())
+if (app.Environment.IsProduction()) //cambiado a development
 {
     // Use development-specific features
     app.UseSwagger();

@@ -27,6 +27,11 @@ namespace BlazorEmpleados.BLL.AutoMapper
             CreateMap<User, UserResponseDTO>();
             CreateMap<UserCreateRequestDTO, User>();
 
+            //add
+            // Ensure collection mappings
+            CreateMap<List<Empleado>, List<EmpleadoResponseDTO>>()
+                .ConvertUsing((src, dest, context) => src.Select(e => context.Mapper.Map<EmpleadoResponseDTO>(e)).ToList());
         }
     }
+    
 }
